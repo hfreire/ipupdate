@@ -1,0 +1,71 @@
+.TH GETIP 7
+.SH NAME
+getip \- IP retrieval tools for ipupdate
+.SH DESCRIPTION
+ipupdate executes external programs to find the IP address that will be assigned
+to various hostnames. Each tool may serve a different purpose and retrieve the
+IP address in different ways. A tool may require no arguments or several. In all
+cases, getip tools print one line to stdout and exits. That line is either an IP
+address or an error message describing why the IP could not be retrieved. When
+an IP address is returned, ipupdate will determine if the IP address has changed
+and update all hosts. If the line is not an IP, then ipupdate will report this
+message in its logs and try the next getip tool. Each of the tools that come
+with ipupdate is explained in detail below.
+
+.SH dollardns
+DollarDNS has provided a webbased means of determining the client's public IP
+address that is meant for this tool alone. No other program is allowed to access
+the DollarDNS website to retrieve the public IP. The page is program friendly
+and optimized to be as fast as possible. It is also reached via a non-SSL port
+443 to work around ISPs that use webproxies between their clients and the
+internet. If you are behind a router, then this is the ideal tool to retrieve
+your public IP and keep your dns updated with it.
+
+.SH whatismyip
+The website at www.whatismyip.com also reports the public IP address. However,
+it is slower than the DollarDNS website and will report the wrong IP address
+if your ISP has you behind a webproxy since port 80 is used. I'm not exactly
+sure if they would approve of you using this tool on a primary basis, so only
+list it in the ipupdate config after the DollarDNS tool so that it will only be
+used if the DollarDNS website is offline.
+
+.SH ifip [interface]
+The ifip tool is the fastest public IP retrieval tool that comes with ipupdate.
+It retrieves the IP address from the system instead of connecting to a website
+someplace.  Course, this will only be effective when used on a computer or
+router that is directly connected to the internet. When used on linux you may
+specify the name of the interface, i.e. eth0. When used on windows, you specify
+the index number of the interface starting with 0. If no interface name or index
+is provided, then the first acceptable interface found by ifip will be used.
+
+.SH failover <port> <mainip> [failoverip]
+The failover tool was introduced in ipupdate 1.1 and is a creative
+implementation of the getip methodology. With this tool you can turn ipupdate
+into a failover solution for any service including web, ftp, and mail. When
+configured appropriately, ipupdate will ask this tool what IP address it should
+assign to the hosts in your config file. The failover tool will attempt a
+connection to the mainip and the port specified on the commandline. If the
+connection succeeds, it will return the mainip. If the hosts in the config were
+not already set to the mainip, then it will update those hosts. If the
+connection did not succeed, then failover will return the failoverip if present
+on the commandline. That way ipupdate will change the IPs for the configured
+hosts while the main ip is offline.
+.PP
+But what if you have more than two ips that provide the same service? No
+problem. Leave out the failoverip argument and failover will simply return the
+connection error with the main IP. Then ipupdate will try the next getip
+command, which can be another failover command testing a different mainip. You
+can chain these failover tests up to five times. This means you can have up to
+six IP addresses that all provide the same service and if five of them is
+offline, the one that is still online will be assigned to the configured hosts.
+.PP
+But what if you want to use failover to test multiple services that use a
+different set of ips each? Again, no problem. Just don't run ipupdate in daemon
+mode. Configure your favorite task scheduler to execute ipupdate using a
+different configuration file for each service however often or at whatever times
+you wish.
+
+.SH "SEE ALSO"
+.PP
+\fBipupdate\fR(8)
+\fBipupdate.conf\fR(5)

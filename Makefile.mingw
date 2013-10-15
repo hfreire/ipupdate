@@ -1,0 +1,78 @@
+CC=gcc -Wall -O3 -s
+
+# compile targets
+
+all: ipupdate dollardns whatismyip ifip failover
+
+ipupdate: ipupdate.o config.o base64.o dns.o md5.o memm.o array.o \
+       tcp.o daemonize.o ipc.o
+	$(CC) -o ipupdate.exe ipupdate.o config.o base64.o dns.o md5.o \
+              memm.o array.o tcp.o daemonize.o ipc.o \
+              -lws2_32 -liberty
+
+dollardns: getip/dollardns.c tcp.o
+	$(CC) -o dollardns.exe getip/dollardns.c tcp.o -lws2_32
+
+whatismyip: getip/whatismyip.c tcp.o
+	$(CC) -o whatismyip.exe getip/whatismyip.c tcp.o -lws2_32
+
+ifip: getip/ifip.c
+	$(CC) -o ifip.exe getip/ifip.c -lws2_32
+
+failover: getip/failover.c tcp.o
+	$(CC) -o failover.exe getip/failover.c tcp.o -lws2_32
+
+# 
+# the main module and modules that depend on it
+#
+
+ipupdate.o: ipupdate.c ipupdate.h
+	$(CC) -c ipupdate.c
+
+config.o: config.c config.h
+	$(CC) -c config.c
+
+# 
+# independant modules
+#
+
+base64.o: include/base64.c include/base64.h
+	$(CC) -c include/base64.c
+
+dns.o: include/dns.c include/dns.h
+	$(CC) -c include/dns.c
+
+md5.o: include/md5.c include/md5.h
+	$(CC) -c include/md5.c
+
+memm.o: include/memm.c include/memm.h
+	$(CC) -c include/memm.c
+
+array.o: include/array.c include/array.h
+	$(CC) -c include/array.c
+
+tcp.o: include/tcp.c include/tcp.h
+	$(CC) -c include/tcp.c
+
+#
+# platform dependant modules
+#
+
+daemonize.o: include/win32/daemonize.c include/win32/daemonize.h
+	$(CC) -c include/win32/daemonize.c
+
+ipc.o: include/win32/ipc.c include/win32/ipc.h
+	$(CC) -c include/win32/ipc.c
+
+#
+# utility commands
+#
+
+clean:
+	-rm *.exe *.o
+
+install: all
+	@echo install is not available for msys
+
+uninstall:
+	@echo uninstall is not available for msys

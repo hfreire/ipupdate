@@ -1,0 +1,255 @@
+.TH IPUPDATE.CONF 5
+.SH NAME
+ipupdate.conf \- config file for ipupdate
+.SH DESCRIPTION
+ipupdate.conf is where you configure ipupdate with the servers and zones
+that need to be dynamically updated with a new IP address.  By default,
+ipupdate looks for this file at
+.BR /etc/ipupdate.conf .
+However, you may override this via the ipupdate commandline.  See the man 
+page for ipupdate for more details.
+
+.SH FORMAT
+The format of ipupdate.conf consists of statements and comments. Comments
+start with a # and causes all following text on that line to be ignored. A
+statement has the format:
+
+keyword "argument" { ...block... }
+
+A keyword is case insensitive and optionally followed by an argument and/or
+block depending on what the keyword is.  Arguments must always be enclosed
+in double quotes unless the data is numeric.  Blocks must always be enclosed
+by open and close braces and any statements within the block fall within the
+context of the preceding keyword.
+
+Keywords, arguments, and blocks may be mashed together with no whitespace at
+all, or spread as far apart with spaces, tabs, or newlines as you want.  The
+only exception is that keywords must be separated from unquoted numerical
+arguments.  In addition, commas and semi-colons are completely ignored.
+
+.SH OPTIONS STATEMENT
+The options statement is where you configure various features that effect how
+ipupdate operates. The following is a list of statements that are found within
+the options block.
+
+.TP 4
+\fBgetip\fR "text" (required, up to 5 occurances)
+Each getip statement specifies the full commandline to a tool that prints an IP
+address to stdout and quits. The getip tools will be tried in the order they are
+listed if one or more tools fail to provide an IP address. The IP returned by
+these tools will be used to update the configured hosts. The tools that come
+with ipupdate only returns your public IP via different means. But you are
+welcome to develop tools that serve other purposes, like returning one IP if a
+particular host is online, and a different IP if it isn't.
+
+.TP 4
+\fBlogenable\fR number (optional, range 0-1, default 1)
+The logfile statement may be used to disable writing to the log file. This may
+be useful on barebones routers that don't have much space for logs.  By default,
+logging is enabled.
+
+.TP 4
+\fBlogfile\fR "text" (optional, default "/var/log/ipupdate.log")
+The logfile statement may be used to set the default log file path.  On windows,
+the default path is the same directory as the executeable. The log file is
+appended with information regarding updating your zones and any failures that
+result while in daemon mode.
+
+.TP 4
+\fBpidfile\fR "text" (optional, default "/var/run/ipupdate.pid")
+The pidfile statement may be used to set the default pid file path.  On windows,
+the default path is the same directory as the executeable. The pid file is
+written with the process id, which is used to find and stop ipupdate in daemon
+mode.
+
+.TP 4
+\fBcheckip\fR number (optional, range 0-1, default 0)
+ipupdate v1.0 used to send a packet for each zone every 5 minutes to see if the
+zone needs to be updated with the new IP address.  For most situations this
+isn't necessary and just makes noise in the dns server's log.  Since ipupdate
+v1.1 this check is only mandatory on startup and an update is assumed to be
+necessary if a new ip is detected while running as a service.  However, you can
+set this option to 1 to restore the previous behavior.  It is disabled by
+default.
+
+.TP 4
+\fBcheckcname\fR number (optional, range 0-1, default 0)
+Since ipupdate v1.1 you are able to scan the configuration for hostnames that
+refer to cname records.  Standards do not permit A record to exist along-side
+cname records.  By default, checkcname is disabled. Hostnames with cnames will
+be silently ignored except maybe by the dns server's logs.  However, you can
+set this option to 1 to disable hostnames with cnames and send a warning to the
+logs.
+
+.SH KEY STATEMENT
+The key statement is a handy shortcut for when multiple zones in your config
+use the same key. Each statement consists of an argument specifying the label
+for the key defined in the following block.  The label may be used elsewhere
+in the configuration to refer to this key.  The following is a list of
+statements that are found within the key block.
+
+.PP
+\fBkeyname\fR "text" (required)
+.br
+\fBkeydata\fR "text" (required)
+.RS 4
+The keyname and keydata statements specify the key name and data that you had
+configured on one or more servers for one or more zones in your config. The key
+data must be a base64 encoded 128bit hmac-md5 key.
+.RE
+
+.SH SERVER STATEMENT
+Their must be at least one server statement in the config. Each statement
+consists of an argument specifying the domain or IP address of a primary dns
+server with zones defined in the following block that needs to be updated. As
+of ipupdate v1.1.1 you can specify a numeric port argument between the server
+name and the block. The following is a list of statements that are found within
+the server block.
+
+.TP 4
+\fBprotocol tcp\fR|\fBudp\fR (optional, default tcp)
+Since ipupdate v1.1.1 you are able to specify what protocol dns queries and
+updates are sent with.  The tcp protocol is more reliable and is heavily
+optimized for by ipupdate, but you can specify udp if tcp is unavailable.
+
+.TP 4
+\fBtimeout\fR number (optional, range 0-2147483647, default 30)
+Since ipupdate v1.1.1 you are able to specify the timeout in seconds for tcp
+connections and dns replies.  Specify a value of 0 to wait forever as previous
+ipupdate verisons did.  This is fine for the tcp protocol since there is a limit
+imposed by the system, but don't ever use 0 for the udp protocol since waiting
+forever may literally take forever.
+
+.TP 4
+\fBfudge\fR number (optional, range 0-65535, default 900)
+The fudge statement specifies the number of seconds after sending the update
+request that a server may consider the request valid.  Ideally, the server and
+client clocks would be in sync and the request would take no more than 15
+seconds to reach the server.  However, a 15 minute margin of error is permitted
+by default.  The fudge is used to help prevent hackers from causing trouble by
+intercepting and resending the request packet at a later date.
+
+.TP 4
+\fBautofudge\fR number (optional, range 0-1, default 1)
+The autofudge statement specifies if ipupdate should increase the \fBfudge\fR
+value if needed. This is recommended and enabled by default. ipupdate does this
+by taking the difference between the time the packet was sent to and received
+by the server plus sixty seconds.
+
+.TP 4
+\fBmaxfudge\fR number (optional, range 0-65535, default 3600)
+The maxfudge statement specifies the maximum value, in seconds, fudge should be
+set to when autofudge is enabled. By default ipupdate will not set a fudge
+greater than one hour.
+
+.TP 4
+\fBttl\fR number (optional, range 60-2147483647, default 300)
+The ttl statement specifies the default time-to-live, in seconds, used for
+updating host A records for all zones on this server. This value is how long
+resolvers will cache your IP address.
+
+.SH ZONE STATEMENT
+There must be at least one zone statement within every server statement block.
+The statement consists of an argument specifying the name of the master zone
+located on the associated server with hostnames defined in the following block
+that needs to be updated.  The following is a list of statements that are found
+within the zone block.
+
+.TP 4
+\fBhosts\fR "text" (required)
+The argument is a list of hostnames that need to be updated within the zone
+specified by the encapsulating zone statement.  The hostnames must be separated
+by any number of commas, spaces, tabs, or newlines, although you should only use
+one character to separate the hostnames since the entire string will remain in
+memory while ipupdate runs. The special hostname '@' represents the zone name,
+and '*' is for updating wildcard records.
+
+.PP
+\fBkey\fR "text" (optional, conflicts with \fBkeyname\fR)
+.br
+\fBkeyname\fR "text" (optional, conflicts with \fBkey\fR)
+.br
+\fBkeydata\fR "text" (required with \fBkeyname\fR)
+.br
+.RS 4
+You can configure your zone to use TSIG authentication for dynamic update
+requests.  While this is optional as of ipupdate 1.1, it is strongly recommended
+since unsecured dynamic updates are susceptible to relatively trivial and
+anonymous IP spoofing attacks with the potential of giving unauthorized
+individuals access to modifing your zone. Including the key or keyname/keydata
+statements will keep such transactions secure.
+.RE
+
+.IP "" 4
+The keyname and keydata statements specify the key name and data that you had
+configured for the zone on your server.  The key data must be a base64 encoded
+128bit hmac-md5 key. Alternatively, you can specify these values in a top level
+key statement and refer to that statement by name with the zone level key
+statement. Keep in mind that the top level key statement must be defined before
+the zone level key statement referring to it.
+
+.TP 4
+\fBttl\fR number (optional, range 60-2147483647, default server level ttl)
+The ttl statement specifies the time-to-live, in seconds, used for updating host
+A records within this zone. This value is how long resolvers will cache your IP
+address.
+
+.SH "EXAMPLES"
+.nf
+\fBoptions\fR
+{
+.RS
+\fBgetip\fR "dollardns"
+\fBgetip\fR "whatismyip"
+\fBgetip\fR "ifip eth0"
+
+\fBlogenable\fR 1
+\fBlogfile\fR "/var/log/ipupdate.log"
+\fBpidfile\fR "/var/run/ipupdate.pid"
+\fBcheckip\fR 0
+\fBcheckcname\fR 0
+.RE
+}
+
+\fBkey\fR "example"
+{
+.RS
+\fBkeyname\fR "update.example.com"
+\fBkeydata\fR "flj7DFO7dYQikp6Tophhnw=="
+.RE
+}
+
+\fBserver\fR "ns1.example.com" 53
+{
+.RS 4
+\fBprotocol\fR tcp
+\fBtimeout\fR 30
+\fBfudge\fR 900
+\fBmaxfudge\fR 3600
+\fBautofudge\fR 1
+\fBttl\fR 300
+
+\fBzone\fR "example.com"
+{
+.RS 4
+\fBhosts\fR "@,*,www"
+\fBkey\fR "example"
+\fBttl\fR 60
+.RE
+}
+
+\fBzone\fR "example.org"
+{
+.RS 4
+\fBhosts\fR "@,www,ftp,webmail"
+\fBkeyname\fR "update.example.com"
+\fBkeydata\fR "flj7DFO7dYQikp6Tophhnw=="
+.RE
+}
+.RE
+}
+.fi
+
+.SH "SEE ALSO"
+.PP
+\fBipupdate\fR(8), \fBgetip\fR(7)

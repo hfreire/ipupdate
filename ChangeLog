@@ -1,0 +1,77 @@
+* Version 1.1.1 (18 December 2005)
+
+[bug]   malformed packets were being sent to MS dns server
+[bug]   `ipupdate check` did not report all configuration options
+[bug]   TTL improperly converted to a short type of returned dns records
+[bug]   dns_w2tname() function in dns.c sometimes did not work correctly
+[feat]  dynamic updates/queries may now be sent using the udp protocol
+[feat]  You may now specify a timeout on connections and replies
+[feat]  You may now specify a custom dns server port
+[conf]  server port argument added
+[conf]  'timeout' and 'protocol' options added to server block
+[doc]   ipupdate.conf(5) updated with new configuration options
+[info]  added setserr() and openudp() to inappropriately named tcp.c
+[info]  code now compatible with arm gcc-2.95, thanks to Jacky for patch
+[info]  Makefile uses the default $(CC) compiler, which may be set on cl
+
+* Version 1.1.0 (21 November 2005)
+
+[bug]   buffer overflow was possible in memm module's memmcat
+[bug]   buffer overflow was possible in formatting tsig record
+[bug]   fixed potential for collecting zombies in linux/ipc.c
+[bug]   Used more memory than necessary to parse config
+[bug]   fixed error reporting for gethostbyname on non-windows
+[bug]   updating more than 32767 hosts in a zone may have caused problems
+[bug]   now refuses to send packets with more than 65535 bytes
+[bug]   now reconnects if a server closed the connection
+[bug]   removed possibility for maxfudge to be less than fudge
+[feat]  Unsecured dynamic update supported, compatible to MS DNS Server
+[feat]  Improved error reporting for gethostbyname errors on windows
+[feat]  If there is a bad host, it is disabled instead of the entire zone
+[feat]  On certain dns errors, the zone will be disabled
+[feat]  Memory used for disabled hosts, zones, and servers is now freed
+[feat]  Added restart command to ipupdate
+[feat]  dns packets are no longer sent to see if a zone needs updating
+[conf]  The checkip option has been added to restore previous behavior
+[conf]  You can now have ipupdate check for and disable cname hosts on startup
+[conf]  You can now specify a default ttl in server blocks
+[getip] ifip no longer requires ifconfig, and can now be run on windows
+[getip] ifip no longer requires an argument
+[getip] failover tool added to make ipupdate a failover solution
+[doc]   Added security commentary and restart command to manpage ipupdate(8)
+[doc]   ipupdate.conf(5) reformatted, reworded, and updated with new info
+[doc]   Added man page for getip(7) for help on getip tools
+[log]   messages are now only logged if ipupdate is daemonized
+[info]  dns.c rewritten with new and renamed functions for more modularity
+[info]  split.c/.h renamed to array.c/.h and splice function added
+[info]  terminates without update if an unknown command given on commandline
+
+* Version 1.0.3 (09 September 2005)
+
+[bug]   Fixed unintentional 4095 byte limit on the config file
+[feat]  The config is no longer loaded into memory all at once
+[feat]  'ipupdate check' prints verbose config parsing information
+[log]   No longer prints 'loaded hosts' messages on startup
+[log]   No longer prints 'loading config' on shutdown
+[doc]   The 'ipupdate -v' version wasn't correct since 1.0.1
+[doc]   ipupdate man page updated with new information and presentation
+[info]  Tarball unpacks to ipupdate-%version instead of just ipupdate
+
+* Version 1.0.2 (31 August 2005)
+
+[crit]  Fixed getip when daemonized on non-windows
+[crit]  Fixed false connection failures
+[bug]   Now prints the correct connection error on windows
+[clean] Removed duplicate function declaration from whatismyip.c
+
+* Version 1.0.1 (30 August 2005)
+
+[crit]  Now closes socket handles correctly on windows
+[crit]  Now closes getip read pipe on non-windows systems
+[bug]   Now returns error codes for nondaemon failed updates
+[bug]   Now closes socket handles under a rare error condition
+[doc]   The 'check' syntax has been added to ipupdate -h.
+
+* Version 1.0.0 (26 August 2005)
+
+[info]  Initial release

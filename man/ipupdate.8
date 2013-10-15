@@ -1,0 +1,83 @@
+.TH "IPUPDATE" "8" "August 16, 2005" "" ""
+.SH NAME
+ipupdate \- ip update
+.SH SYNOPSIS
+.B ipupdate
+[ \fB-c \fIconfig-file\fR ] [ \fB-i \fIip\fR|- ] [ \fIcommand\fR ]
+.br
+.B ipupdate
+{ \fB-v\fR|\fB-h\fR }
+.br
+.SH "DESCRIPTION"
+.PP
+\fBipupdate\fR daemon for updating the ip address on a dns server
+that supports RFC2136 dns update.  When run without a command, the program
+will just read the configuration file, updating any hosts as needed, and
+immediately exit.
+.SH "OPTIONS"
+.TP
+\fB-c \fIconfig-file\fR
+Use \fIconfig-file\fR as the configuration file instead of the default,
+\fI/etc/ipupdate.conf\fR.
+.TP
+\fB-h\fR
+Print brief commandline syntax information and exit.
+.TP
+\fB-i \fIip\fR|-
+Do not attempt to find the public ip, use \fIip\fR instead. If a hyphen
+is used instead of an ip address, then the ip, followed by a newline, will
+be read from stdin
+.TP
+\fB-v\fR
+Print version information and exit.
+.SH "COMMANDS"
+.TP
+\fBstart\fR
+Start the daemon.  The daemon will update all hosts as necessary every
+5 minutes.  The daemon will NOT daemonize if the -i option is used.
+.TP
+\fBstop\fR
+Stop the daemon and exit.
+.TP
+\fBrestart\fR
+Stop the previous instance of ipupdate and start daemon mode with this one.
+.TP
+\fBcheck\fR
+Check the syntax of the configuration file.  Load the config and print
+verbose log parsing information. Exit with a return value of 0 if there
+were no errors.
+.SH "SECURITY"
+.PP
+The configuration file contains secret key information that you don't want just
+anybody to see or use.  Make sure the configuration file is never world
+readable.  Set the file owner and group so that only authorized persons can use
+ipupdate to change the IP in configured zones.
+.PP
+Never configure dns servers to allow unsecured dynamic updates even if you use
+IP based access control on the dns server.  Spoofing the source IP address in
+UDP dynamic update requests in an anonymous fashion is relatively trivial to do.
+The unsecured dynamic update feature is only intended to be used for dns servers
+that don't support basic TSIG authentication (i.e. Microsoft DNS Server only
+permits GSS-TSIG secured or unsecured updates). Even then, it should only be
+used on a secure network where the dns server cannot be accessed by the internet.
+If you allow unsecured dynamic updates, then there is significant risk that an
+average dns hacker can change your IP address at will and spy on your website
+activity in an unobvious fashion at worst or denial of service and embarrassment
+at best.
+
+.SH "FILES"
+.TP
+\fI/etc/ipupdate.conf\fR
+The default location for the configuration file.
+.TP
+\fI/var/run/ipupdate.pid\fR
+The default location for the process-id file that is created when the
+daemon is started.  This location may be changed in the configuration
+file.
+.TP
+\fI/var/log/ipupdate.log\fR
+The default location for the log file.  This location may be changed in
+the configuration file.
+.SH "SEE ALSO"
+.PP
+\fIRFC 2136\fR, \fBipupdate.conf\fR(5), \fBgetip\fR(7)
